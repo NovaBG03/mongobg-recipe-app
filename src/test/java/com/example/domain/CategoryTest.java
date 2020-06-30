@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by jt on 6/17/17.
- */
 public class CategoryTest {
 
     Category category;
