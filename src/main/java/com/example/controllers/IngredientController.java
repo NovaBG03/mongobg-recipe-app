@@ -3,6 +3,7 @@ package com.example.controllers;
 import com.example.commands.IngredientCommand;
 import com.example.commands.RecipeCommand;
 import com.example.commands.UnitOfMeasureCommand;
+import com.example.domain.UnitOfMeasure;
 import com.example.services.IngredientService;
 import com.example.services.RecipeService;
 import com.example.services.UnitOfMeasureService;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.Set;
 
 @Slf4j
 @Controller
@@ -54,11 +57,12 @@ public class IngredientController {
 
         //need to return back parent id for hidden form property
         IngredientCommand ingredientCommand = new IngredientCommand();
-        model.addAttribute("ingredient", ingredientCommand);
+        ingredientCommand.setRecipeId(recipeCommand.getId());
 
         //init uom
         ingredientCommand.setUom(new UnitOfMeasureCommand());
 
+        model.addAttribute("ingredient", ingredientCommand);
         model.addAttribute("uomList",  unitOfMeasureService.listAllUoms());
 
         return "recipe/ingredient/ingredientform";
@@ -67,9 +71,11 @@ public class IngredientController {
     @GetMapping("recipe/{recipeId}/ingredient/{id}/update")
     public String updateRecipeIngredient(@PathVariable String recipeId,
                                          @PathVariable String id, Model model){
-        model.addAttribute("ingredient", ingredientService.findByRecipeIdAndIngredientId(recipeId, id));
+        IngredientCommand ingredient = ingredientService.findByRecipeIdAndIngredientId(recipeId, id);
+        model.addAttribute("ingredient", ingredient);
 
-        model.addAttribute("uomList", unitOfMeasureService.listAllUoms());
+        Set<UnitOfMeasureCommand> unitsOfMeasure = unitOfMeasureService.listAllUoms();
+        model.addAttribute("uomList", unitsOfMeasure);
         return "recipe/ingredient/ingredientform";
     }
 

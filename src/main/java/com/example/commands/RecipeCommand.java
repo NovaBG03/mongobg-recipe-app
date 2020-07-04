@@ -12,12 +12,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 public class RecipeCommand {
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @NotBlank
     @Size(min = 3, max = 255)
