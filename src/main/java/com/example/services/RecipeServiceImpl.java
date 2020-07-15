@@ -3,9 +3,11 @@ package com.example.services;
 import com.example.commands.RecipeCommand;
 import com.example.converters.RecipeCommandToRecipe;
 import com.example.converters.RecipeToRecipeCommand;
+import com.example.domain.Ingredient;
 import com.example.domain.Recipe;
 import com.example.exceptions.NotFoundException;
 import com.example.repositories.RecipeRepository;
+import com.example.repositories.reactive.UnitOfMeasureReactiveRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,14 +21,19 @@ import java.util.Set;
 public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeRepository recipeRepository;
+    private final UnitOfMeasureReactiveRepository unitOfMeasureReactiveRepository;
     private final RecipeCommandToRecipe recipeCommandToRecipe;
     private final RecipeToRecipeCommand recipeToRecipeCommand;
 
-    public RecipeServiceImpl(RecipeRepository recipeRepository, RecipeCommandToRecipe recipeCommandToRecipe, RecipeToRecipeCommand recipeToRecipeCommand) {
+    public RecipeServiceImpl(RecipeRepository recipeRepository,
+                             UnitOfMeasureReactiveRepository unitOfMeasureReactiveRepository,
+                             RecipeCommandToRecipe recipeCommandToRecipe, RecipeToRecipeCommand recipeToRecipeCommand) {
         this.recipeRepository = recipeRepository;
+        this.unitOfMeasureReactiveRepository = unitOfMeasureReactiveRepository;
         this.recipeCommandToRecipe = recipeCommandToRecipe;
         this.recipeToRecipeCommand = recipeToRecipeCommand;
     }
+
 
     @Override
     public Set<Recipe> getRecipes() {
@@ -59,6 +66,10 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional
     public RecipeCommand saveRecipeCommand(RecipeCommand command) {
         Recipe detachedRecipe = recipeCommandToRecipe.convert(command);
+
+        for (Ingredient ingredient : detachedRecipe.getIngredients()) {
+            ingredient.setUom(unitOfMeasureReactiveRepository.findById(ingredient.getUom().getId()).block());
+        }
 
         Recipe savedRecipe = recipeRepository.save(detachedRecipe);
         log.debug("Saved RecipeId:" + savedRecipe.getId());

@@ -7,6 +7,7 @@ import com.example.converters.RecipeToRecipeCommand;
 import com.example.domain.Recipe;
 import com.example.exceptions.NotFoundException;
 import com.example.repositories.RecipeRepository;
+import com.example.repositories.reactive.UnitOfMeasureReactiveRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -33,11 +34,14 @@ public class RecipeServiceImplTest {
     @Mock
     RecipeCommandToRecipe recipeCommandToRecipe;
 
+    @Mock
+    UnitOfMeasureReactiveRepository unitOfMeasureReactiveRepository;
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        recipeService = new RecipeServiceImpl(recipeRepository, recipeCommandToRecipe, recipeToRecipeCommand);
+        recipeService = new RecipeServiceImpl(recipeRepository, unitOfMeasureReactiveRepository, recipeCommandToRecipe, recipeToRecipeCommand);
     }
 
     @Test

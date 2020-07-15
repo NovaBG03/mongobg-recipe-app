@@ -1,12 +1,14 @@
 package com.example.services;
 
 import com.example.commands.IngredientCommand;
+import com.example.commands.UnitOfMeasureCommand;
 import com.example.converters.IngredientCommandToIngredient;
 import com.example.converters.IngredientToIngredientCommand;
 import com.example.converters.UnitOfMeasureCommandToUnitOfMeasure;
 import com.example.converters.UnitOfMeasureToUnitOfMeasureCommand;
 import com.example.domain.Ingredient;
 import com.example.domain.Recipe;
+import com.example.domain.UnitOfMeasure;
 import com.example.repositories.reactive.RecipeReactiveRepository;
 import com.example.repositories.reactive.UnitOfMeasureReactiveRepository;
 import org.junit.Before;
@@ -90,6 +92,10 @@ public class IngredientServiceImplTest {
         IngredientCommand command = new IngredientCommand();
         command.setId("3");
         command.setRecipeId("2");
+
+        UnitOfMeasureCommand unitOfMeasure = new UnitOfMeasureCommand();
+        unitOfMeasure.setId("some id");
+        command.setUom(unitOfMeasure);
         Mono<Recipe> recipeMono = Mono.just(new Recipe());
 
         Recipe savedRecipe = new Recipe();
@@ -99,6 +105,7 @@ public class IngredientServiceImplTest {
 
         when(recipeReactiveRepository.findById(anyString())).thenReturn(recipeMono);
         when(recipeReactiveRepository.save(any())).thenReturn(savedRecipeMono);
+        when(unitOfMeasureReactiveRepository.findById(anyString())).thenReturn(Mono.empty());
 
         //when
         IngredientCommand savedCommand = ingredientService.saveIngredientCommand(command).block();
