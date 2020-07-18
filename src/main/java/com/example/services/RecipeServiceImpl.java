@@ -7,10 +7,13 @@ import com.example.domain.Ingredient;
 import com.example.domain.Recipe;
 import com.example.exceptions.NotFoundException;
 import com.example.repositories.RecipeRepository;
+import com.example.repositories.reactive.RecipeReactiveRepository;
 import com.example.repositories.reactive.UnitOfMeasureReactiveRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -20,15 +23,15 @@ import java.util.Set;
 @Service
 public class RecipeServiceImpl implements RecipeService {
 
-    private final RecipeRepository recipeRepository;
+    private final RecipeReactiveRepository recipeReactiveRepository;
     private final UnitOfMeasureReactiveRepository unitOfMeasureReactiveRepository;
     private final RecipeCommandToRecipe recipeCommandToRecipe;
     private final RecipeToRecipeCommand recipeToRecipeCommand;
 
-    public RecipeServiceImpl(RecipeRepository recipeRepository,
+    public RecipeServiceImpl(RecipeReactiveRepository recipeReactiveRepository,
                              UnitOfMeasureReactiveRepository unitOfMeasureReactiveRepository,
                              RecipeCommandToRecipe recipeCommandToRecipe, RecipeToRecipeCommand recipeToRecipeCommand) {
-        this.recipeRepository = recipeRepository;
+        this.recipeReactiveRepository = recipeReactiveRepository;
         this.unitOfMeasureReactiveRepository = unitOfMeasureReactiveRepository;
         this.recipeCommandToRecipe = recipeCommandToRecipe;
         this.recipeToRecipeCommand = recipeToRecipeCommand;
@@ -36,48 +39,46 @@ public class RecipeServiceImpl implements RecipeService {
 
 
     @Override
-    public Set<Recipe> getRecipes() {
+    public Flux<Recipe> getRecipes() {
         log.debug("I'm in the service");
 
-        Set<Recipe> recipeSet = new HashSet<>();
-        recipeRepository.findAll().iterator().forEachRemaining(recipeSet::add);
-        return recipeSet;
+        return recipeReactiveRepository.findAll();
     }
 
     @Override
-    public Recipe findById(String id) {
+    public Mono<Recipe> findById(String id) {
 
-        Optional<Recipe> recipeOptional = recipeRepository.findById(id);
+        Mono<Recipe> recipeMono = recipeReactiveRepository.findById(id);
 
-        if (!recipeOptional.isPresent()) {
+        if (recipeMono.block() == null) {
             throw new NotFoundException("Recipe Not Found. For ID value: " + id );
         }
 
-        return recipeOptional.get();
+        return recipeMono;
     }
 
     @Override
-    @Transactional
-    public RecipeCommand findCommandById(String id) {
-        return recipeToRecipeCommand.convert(findById(id));
+    public Mono<RecipeCommand> findCommandById(String id) {
+
+        return this.findById(id).map(recipe -> recipeToRecipeCommand.convert(recipe));
     }
 
     @Override
-    @Transactional
-    public RecipeCommand saveRecipeCommand(RecipeCommand command) {
+    public Mono<RecipeCommand> saveRecipeCommand(RecipeCommand command) {
         Recipe detachedRecipe = recipeCommandToRecipe.convert(command);
 
         for (Ingredient ingredient : detachedRecipe.getIngredients()) {
             ingredient.setUom(unitOfMeasureReactiveRepository.findById(ingredient.getUom().getId()).block());
         }
 
-        Recipe savedRecipe = recipeRepository.save(detachedRecipe);
-        log.debug("Saved RecipeId:" + savedRecipe.getId());
-        return recipeToRecipeCommand.convert(savedRecipe);
+        Mono<Recipe> savedRecipe = recipeReactiveRepository.save(detachedRecipe);
+        log.debug("Saved RecipeId:" + savedRecipe.block().getId());
+
+        return savedRecipe.map(recipe -> recipeToRecipeCommand.convert(recipe));
     }
 
     @Override
-    public void deleteById(String idToDelete) {
-        recipeRepository.deleteById(idToDelete);
+    public Mono<Void> deleteById(String idToDelete) {
+        return recipeReactiveRepository.deleteById(idToDelete);
     }
 }
