@@ -47,14 +47,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public Mono<Recipe> findById(String id) {
-
-        Mono<Recipe> recipeMono = recipeReactiveRepository.findById(id);
-
-        if (recipeMono.block() == null) {
-            throw new NotFoundException("Recipe Not Found. For ID value: " + id );
-        }
-
-        return recipeMono;
+        return recipeReactiveRepository.findById(id);
     }
 
     @Override

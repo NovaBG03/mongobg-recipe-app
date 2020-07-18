@@ -59,15 +59,6 @@ public class RecipeServiceImplTest {
         verify(recipeReactiveRepository, never()).findAll();
     }
 
-    @Test(expected = NotFoundException.class)
-    public void getRecipeByIdTestNotFound() throws Exception {
-        when(recipeReactiveRepository.findById(anyString())).thenReturn(Mono.empty());
-
-        Recipe recipeReturned = recipeService.findById("1").block();
-
-        //should go boom
-    }
-
     @Test
     public void getRecipeCommandByIdTest() throws Exception {
         Recipe recipe = new Recipe();
